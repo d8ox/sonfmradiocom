@@ -1,0 +1,97 @@
+########################################################################
+#  OPTIMIZED .HTACCESS – WordPress + LiteSpeed Cache
+#  (respaldar el archivo actual antes de sobrescribir)                 #
+########################################################################
+
+# ---------------------------------------------------------------------
+# 1. BLOQUE iTHEMES SECURITY
+# ---------------------------------------------------------------------
+<IfModule mod_authz_core.c>
+  <FilesMatch "^(readme\.html|readme\.txt|wp-config\.php|\.htaccess)$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+
+# Evita listar directorios
+Options -Indexes
+
+# ---------------------------------------------------------------------
+# 2. LITESPEED CACHE
+# ---------------------------------------------------------------------
+<IfModule LiteSpeed>
+  RewriteEngine On
+  CacheLookup On
+
+  #––– Seguridad interna de LSCache –––#
+  RewriteRule ^litespeed/debug/.*\.log$ - [F,L]
+  RewriteRule \.litespeed_conf\.dat - [F,L]
+
+  #––– AJAX asincrono –––#
+  RewriteCond %{REQUEST_URI} /wp-admin/admin-ajax\.php
+  RewriteCond %{QUERY_STRING} (^|&)action=async_litespeed
+  RewriteRule .* - [E=noabort:1]
+
+  #––– Variación MÓVIL (incluye UA móviles modernos) –––#
+  RewriteCond %{HTTP_USER_AGENT} "(Mobile|Android|Silk/|Kindle|BlackBerry|Opera\ Mini|Opera\ Mobi|iPhone|iPod|IEMobile|Windows Phone)" [NC]
+  RewriteRule .* - [E=Cache-Control:vary=%{ENV:LSCACHE_VARY_VALUE}+ismobile]
+
+  #––– WEBP –––#
+  RewriteCond %{HTTP_ACCEPT} "image/webp" [OR]
+  RewriteCond %{REQUEST_FILENAME}\.webp -f
+  RewriteRule .* - [E=Cache-Control:vary=%{ENV:LSCACHE_VARY_VALUE}+webp]
+
+  #––– Eliminar parámetros de tracking –––#
+  CacheKeyModify -qs:fbclid
+  CacheKeyModify -qs:gclid
+  CacheKeyModify -qs:utm*
+  CacheKeyModify -qs:_ga
+</IfModule>
+
+# ---------------------------------------------------------------------
+# 3. BROWSER‑CACHING EXPIRES
+# ---------------------------------------------------------------------
+<IfModule mod_expires.c>
+  ExpiresActive On
+
+  # Imágenes
+  ExpiresByType image/avif               "access plus 365 days"
+  ExpiresByType image/webp               "access plus 365 days"
+  ExpiresByType image/gif                "access plus 365 days"
+  ExpiresByType image/png                "access plus 365 days"
+  ExpiresByType image/jpeg               "access plus 365 days"
+  ExpiresByType image/svg+xml            "access plus 365 days"
+  ExpiresByType image/x-icon             "access plus 365 days"
+
+  # Fuentes
+  ExpiresByType font/woff2               "access plus 365 days"
+  ExpiresByType font/woff                "access plus 365 days"
+  ExpiresByType font/ttf                 "access plus 365 days"
+  ExpiresByType application/vnd.ms-fontobject "access plus 365 days"
+
+  # CSS & JS
+  ExpiresByType text/css                 "access plus 365 days"
+  ExpiresByType application/javascript   "access plus 365 days"
+  ExpiresByType text/javascript          "access plus 365 days"
+</IfModule>
+
+# ---------------------------------------------------------------------
+# 4. PORTAL SIN REDIRECCIÓN (muestra /index.html en raíz)
+# ---------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{REQUEST_URI} ^/$
+  RewriteRule ^$ /index.html [L]
+</IfModule>
+
+# ---------------------------------------------------------------------
+# 5. CORE WORDPRESS REWRITES
+# ---------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  RewriteBase /
+  RewriteRule ^index\.php$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.php [L]
+</IfModule>
