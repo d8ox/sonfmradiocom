@@ -1,2 +1,3 @@
 # sonfmradiocom
-Repo de sonfmradio.com - Y lo relevante con los sitios web de SONFM Radio.
+Repo público de sonfmradio.com.
+Colaboración de archivos y reporte de problemas web para su pronta solución.
